@@ -82,7 +82,7 @@ def edge_detect_run():
     # plt.show()
 
 def corner_detect_run():
-    img = cv2.imread('./good_frames/good_cube0.jpg') 
+    img = cv2.imread('test-cube.png') 
     # img = cv2.imread('./cube_test_data/test20.jpg') 
     gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
     gray = np.float32(gray) 
@@ -113,7 +113,7 @@ def corner_detect_run():
     plt.show()
 
 def contours_detect_run():
-    img = cv2.imread('./good_frames/good_cube190.jpg') 
+    img = cv2.imread('test-cube.png') 
     # img = cv2.imread('./cube_test_data/test20.jpg') 
     assert img is not None, "file could not be read, check with os.path.exists()"
     edges = cv2.Canny(img,200,200)
@@ -127,8 +127,8 @@ def contours_detect_run():
         cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    # contours_detect_run()
+    contours_detect_run()
     # corner_detect_run()
-    edge_detect_run()
+    # edge_detect_run()
     # docdetect_image_run()
     # docdetect_video_run()
