@@ -106,11 +106,11 @@ def process_image(image):
 
 
 def make_vid():
-    video_output=cv2.VideoWriter('output/output2.mp4',cv2.VideoWriter_fourcc(*"mp4v"),30,(720, 1280), True)
-    video_mask=cv2.VideoWriter('output/mask2.mp4',cv2.VideoWriter_fourcc(*"mp4v"),30,(720, 1280), False)
-    video_edges=cv2.VideoWriter('output/edges2.mp4',cv2.VideoWriter_fourcc(*"mp4v"),30,(720, 1280), False)
-    video_tile=cv2.VideoWriter('output/tiles2.mp4',cv2.VideoWriter_fourcc(*"mp4v"),30,(720, 1280), True)
-    cam = cv2.VideoCapture("data/input-video.mp4")
+    video_output=cv2.VideoWriter('output/output3.mp4',cv2.VideoWriter_fourcc(*"mp4v"),30,(720, 1280), True)
+    video_mask=cv2.VideoWriter('output/mask3.mp4',cv2.VideoWriter_fourcc(*"mp4v"),30,(720, 1280), False)
+    video_edges=cv2.VideoWriter('output/edges3.mp4',cv2.VideoWriter_fourcc(*"mp4v"),30,(720, 1280), False)
+    video_tile=cv2.VideoWriter('output/tiles3.mp4',cv2.VideoWriter_fourcc(*"mp4v"),30,(720, 1280), True)
+    cam = cv2.VideoCapture("data/cube-video.mp4")
     ret, frame = cam.read()
     while ret:
         # cv2.imshow('video', frame)
@@ -133,35 +133,109 @@ def test_image():
     image = cv2.imread('test-cube.png') 
     output_image, smoothed_mask, edges, _, _, _ = process_image(image)
 
-    cv2.imshow('edges', edges)
+    # cv2.imshow('edges', edges)
     contours, hierarchy = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     contour_image = cv2.bitwise_xor(image, image)
     cv2.drawContours(contour_image, contours, -1, (255, 255, 255), 3)
     kernel =  np.ones((3,3),np.uint8)
     contour_image = cv2.dilate(contour_image,kernel,iterations = 2)
     contour_image = cv2.morphologyEx(contour_image, cv2.MORPH_CLOSE, kernel)
-    cv2.imshow('contours', contour_image)
+    # cv2.imshow('contours', contour_image)
 
     tiles = cv2.bitwise_and(output_image, 255 - contour_image)
-    cv2.imshow('tiles', tiles)
+    # cv2.imshow('tiles', tiles)
 
     edges2 = cv2.Canny(tiles,200,200)
-    cv2.imshow('edge2', edges2)
+    # cv2.imshow('edge2', edges2)
 
 
     # contour_image2 = cv2.bitwise_xor(image, image)
-    # contours2, hierarchy = cv2.findContours(edges2, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    # rect = cv2.minAreaRect(tiles)
+    # # contours2, hierarchy = cv2.findContours(edges2, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    # cv2.imshow('mask', smoothed_mask)
+    # rect = cv2.minAreaRect(smoothed_mask)
     # box = cv2.boxPoints(rect)
     # box = np.int32(box)
-    # cv2.drawContours(image,[box],0,(0,0,255),2)
-    # cv2.imshow('contours2', box)
+    # cv2.drawContours(contour_image2,[box],0,(0,0,255),2)
+    # cv2.imshow('contours2', contour_image2)
 
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
 
+def main():
+    video_output=cv2.VideoWriter('output/frame_mask.mp4',cv2.VideoWriter_fourcc(*"mp4v"),30,(720, 1280), False)
+    cam = cv2.VideoCapture("data/cube-video.mp4")
+    ret, image = cam.read()
+    while ret:
+        # outputs = process_image(frame)
+
+        # image = cv2.imread('test-cube.png') 
+        output_image, smoothed_mask, edges, _, _, _ = process_image(image)
+        # cv2.imshow('smoothed mask', smoothed_mask)
+
+        # Hard coded mask
+        mask = np.zeros(image.shape[:2], dtype="uint8")
+        height, width, _ = image.shape
+        size = 250
+        # print(width, height)
+        cv2.rectangle(mask, (width//2 - size, height//2 - size),(width//2 + size, height//2 + size), 255, -1)
+
+        rect_area = cv2.countNonZero(mask)
+        # cv2.imshow('mask', mask)
+
+        output_mask = cv2.bitwise_and(smoothed_mask, mask)
+        output_mask_inv = cv2.bitwise_not(mask)
+        output_mask_inv = cv2.bitwise_and(smoothed_mask, output_mask_inv)
+        # cv2.imshow('output mask', output_mask)
+        # cv2.imshow('output mask inv', output_mask_inv)
+
+        pixels = cv2.countNonZero(output_mask) / rect_area * 100
+        pixels_inv = cv2.countNonZero(output_mask_inv) / rect_area * 100
+
+
+        # print(pixels, pixels_inv, rect_area)
+        if pixels > 80 and pixels_inv < 20:
+            print("Good frame")
+            video_output.write(output_image)
+        video_output.write(smoothed_mask)
+        # ret = False
+        ret, image = cam.read()
+            
+    video_output.release()
+
+    # image = cv2.imread('test-cube.png') 
+    # output_image, smoothed_mask, edges, _, _, _ = process_image(image)
+    # cv2.imshow('smoothed mask', smoothed_mask)
+    #
+    # # Hard coded mask
+    # mask = np.zeros(image.shape[:2], dtype="uint8")
+    # width, height, _ = image.shape
+    # cv2.rectangle(mask, (int(width * 0.2), int(height * 0.25)), (int(width * 0.7), int(height * 0.75)), 255, -1)
+    #
+    # rect_area = cv2.countNonZero(mask)
+    # cv2.imshow('mask', mask)
+    #
+    # output_mask = cv2.bitwise_and(smoothed_mask, mask)
+    # output_mask_inv = cv2.bitwise_not(mask)
+    # output_mask_inv = cv2.bitwise_and(smoothed_mask, output_mask_inv)
+    # cv2.imshow('output mask', output_mask)
+    # cv2.imshow('output mask inv', output_mask_inv)
+    #
+    # pixels = cv2.countNonZero(output_mask) / rect_area * 100
+    # pixels_inv = cv2.countNonZero(output_mask_inv) / rect_area * 100
+    #
+    #
+    # print(pixels, pixels_inv, rect_area)
+    # if pixels > 90 and pixels_inv < 10:
+    #     print("Good frame")
+    #
+    #
+    #
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
 if __name__ == '__main__':
-    make_vid()
+    # make_vid()
     # test_image()
+    main()
 
